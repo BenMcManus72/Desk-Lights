@@ -1,7 +1,7 @@
 #include <FastLED.h>
 
 const int max_light_settings = 9;
-const int max_leds = 6;
+const int max_leds = 75;
 const int brightnesses[] = {25, 15, 5, 0};
 int displaytype = 1;
 int output1;
@@ -11,7 +11,7 @@ int saved_output2;
 int brightness_counter = 0;
 int brightness_button;
 int saved_brightness_button;
-CRGB led[6];
+CRGB led[max_leds];
 void color_selector(int displaytype){
   switch (displaytype){
       case 1:
@@ -39,7 +39,7 @@ void color_selector(int displaytype){
       fill_solid(led,max_leds, CRGB(255, 0, 255));
         break;
       case 9:
-      fill_rainbow(led,max_leds, 0, 42);
+      fill_rainbow(led,max_leds, 0, 3);
       break;
 
     }
@@ -49,7 +49,7 @@ void setup(void) {
   pinMode(6, INPUT_PULLUP);
   pinMode(7,INPUT_PULLUP);
   pinMode(10, INPUT_PULLUP);
-  FastLED.addLeds<WS2812B, 8, GRB>(led, 6);
+  FastLED.addLeds<WS2812B, 8, GRB>(led, max_leds);
   FastLED.setBrightness(25);
 }
 
