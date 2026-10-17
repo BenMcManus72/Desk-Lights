@@ -1,19 +1,23 @@
+// to control the LEDs
 #include <FastLED.h>
+// to communicate via radio
+#include <RF24.h>
+#include <SPI.h>
 
-const int max_light_settings = 9;
+//const int max_light_settings = 9;
 const int max_leds = 75;
-const int brightnesses[] = {25, 15, 5, 0};
 int displaytype = 1;
-int output1;
-int saved_output1;
-int output2;
-int saved_output2;
-int brightness_counter = 0;
-int brightness_button;
-int saved_brightness_button;
+
+//for the radio
+RF24 radio(9,10);
+const byte address[6] = "00001";
+int packet_recieved;
+
+
+
 CRGB led[max_leds];
-void color_selector(int displaytype){
-  switch (displaytype){
+void color_selector(int packet_recieved){
+  switch (packet_recieved){
       case 1:
         fill_solid(led, max_leds, CRGB(0,0,0));
         break;
@@ -48,45 +52,25 @@ void color_selector(int displaytype){
 void setup(void) {
   pinMode(6, INPUT_PULLUP);
   pinMode(7,INPUT_PULLUP);
-  pinMode(10, INPUT_PULLUP);
   FastLED.addLeds<WS2812B, 8, GRB>(led, max_leds);
   FastLED.setBrightness(25);
+  //radio
+	radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening();
+
 }
 
 void loop(void) {
-  output1 = digitalRead(6);
-  output2 = digitalRead(7);
-  brightness_button = digitalRead(10);
-  if (output1 != saved_output1){ //if the rotary encoder is moved right
-    if (output1 != output2){
-      displaytype ++;
-      if (displaytype > max_light_settings){
-        displaytype = 1;
-      }
-    }
-    else if(output1 == output2){// if the rotary encoder is turned left
-      displaytype --;
-      if (displaytype < 1){
-        displaytype = max_light_settings;
-      }
-    }
-    color_selector(displaytype);
 
-    FastLED.show();
+    if (radio.available()) {
+      radio.read(&packet_recieved, sizeof(packet_recieved));
+      if (packet_recieved >= '1' && packet_recieved <= '9'){
+        displaytype = packet_recieved - '0';
+        color_selector(displaytype);
+        FastLED.show();
+        delay(100);
+      }
+    }
   }
-  if (saved_brightness_button != brightness_button){
-    if (brightness_button == 0){
-    brightness_counter ++;
-    if (brightness_counter >= 4){
-      brightness_counter = 0;
-    }
-    FastLED.setBrightness(brightnesses[brightness_counter]);
-    FastLED.show();
-
-  }}
-
-  saved_output1 = output1;
-  saved_output2 = output2;
-  saved_brightness_button = brightness_button;
-
-}
